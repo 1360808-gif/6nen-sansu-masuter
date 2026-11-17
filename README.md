@@ -1,1 +1,0 @@
-# 6nen-sansu-masuter

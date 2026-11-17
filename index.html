@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小学6年生 算数マスター＆アバターガチャ</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: M PLUS Rounded 1c -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      background-color: #f0f9ff;
+      background-image: radial-gradient(#bae6fd 2px, transparent 2px);
+      background-size: 28px 28px;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 分数表示用スタイル */
+    .frac {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      margin: 0 4px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+    .frac-num {
+      border-bottom: 2px solid currentColor;
+      padding: 0 4px 2px;
+      display: block;
+    }
+    .frac-den {
+      padding: 2px 4px 0;
+      display: block;
+    }
+
+    /* ポップなボタンアニメーション */
+    .btn-pop {
+      transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.1s;
+    }
+    .btn-pop:active:not(:disabled) {
+      transform: translateY(3px) scale(0.98);
+    }
+
+    /* ガチャカプセルアニメーション */
+    @keyframes capsuleDrop {
+      0% { transform: translateY(-250px) rotate(0deg) scale(0.5); opacity: 0; }
+      60% { transform: translateY(15px) rotate(360deg) scale(1.05); opacity: 1; }
+      80% { transform: translateY(-8px) rotate(350deg) scale(0.98); }
+      100% { transform: translateY(0) rotate(360deg) scale(1); opacity: 1; }
+    }
+    @keyframes capsuleShake {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      20% { transform: rotate(-15deg) scale(1.05); }
+      40% { transform: rotate(15deg) scale(1.05); }
+      60% { transform: rotate(-10deg) scale(1.08); }
+      80% { transform: rotate(10deg) scale(1.08); }
+    }
+    @keyframes popIn {
+      0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+      70% { transform: scale(1.15) rotate(5deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    @keyframes floatCoin {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-50px) scale(1.3); opacity: 0; }
+    }
+    @keyframes shineSweep {
+      0% { transform: translateX(-100%) rotate(25deg); }
+      100% { transform: translateX(200%) rotate(25deg); }
+    }
+
+    .anim-drop { animation: capsuleDrop 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .anim-shake { animation: capsuleShake 0.6s ease-in-out infinite; }
+    .anim-pop { animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    .anim-coin-float { animation: floatCoin 0.9s ease-out forwards; }
+
+    /* レアリティ枠エフェクト */
+    .rarity-N { border-color: #94a3b8; background: linear-gradient(135deg, #f8fafc, #e2e8f0); }
+    .rarity-R { border-color: #38bdf8; background: linear-gradient(135deg, #e0f2fe, #bae6fd); }
+    .rarity-SR { border-color: #fbbf24; background: linear-gradient(135deg, #fef3c7, #fde68a); box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); }
+    .rarity-UR {
+      border-color: #f43f5e;
+      background: linear-gradient(135deg, #ffe4e6, #fae8ff, #e0e7ff);
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .rarity-UR::after {
+      content: "";
+      position: absolute;
+      top: -50%; left: -50%; width: 50%; height: 200%;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent);
+      animation: shineSweep 2.5s infinite;
+      pointer-events: none;
+    }
+
+    /* カスタムスクロールバー */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #e0f2fe; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #7dd3fc; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+  <!-- ヘッダー（常に表示） -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-4 border-sky-200 shadow-sm">
+    <div class="max-w-5xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2">
+      <!-- 左側：アバターミニ表示＆タイトル -->
+      <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchView('home')">
+        <div id="header-avatar-box" class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border-3 border-sky-400 shadow-inner flex items-center justify-center relative overflow-hidden bg-sky-100 shrink-0">
+          <!-- JSでアバターSVG描画 -->
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span id="header-title-badge" class="text-[11px] sm:text-xs font-extrabold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+              算数見習い
+            </span>
+          </div>
+          <h1 class="text-base sm:text-xl font-black text-sky-900 tracking-tight leading-tight">
+            小6算数マスター
+          </h1>
+        </div>
+      </div>
+
+      <!-- 右側：コイン表示＆ミュートボタン -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- コインカウンター -->
+        <div id="coin-display-box" class="relative flex items-center gap-1.5 bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-400 px-3 sm:px-4 py-1.5 rounded-full shadow-sm">
+          <span class="text-lg sm:text-xl">🪙</span>
+          <span id="coin-count" class="font-black text-amber-800 text-base sm:text-xl tabular-nums">0</span>
+          <span class="text-xs font-bold text-amber-700 hidden sm:inline">コイン</span>
+          <div id="coin-float-container" class="absolute inset-0 pointer-events-none flex justify-center"></div>
+        </div>
+
+        <!-- 効果音ミュート切替 -->
+        <button id="mute-btn" onclick="toggleMute()" class="btn-pop w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 flex items-center justify-center text-lg sm:text-xl" title="効果音のオン/オフ">
+          🔊
+        </button>
+      </div>
+    </div>
+
+    <!-- ナビゲーションタブ -->
+    <nav class="max-w-5xl mx-auto px-3 sm:px-6 pb-2 flex gap-2">
+      <button id="nav-home" onclick="switchView('home')" class="btn-pop flex-1 py-2 px-3 rounded-xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-1.5 bg-sky-500 text-white shadow-md shadow-sky-200">
+        <span>📚</span> <span>学習する</span>
+      </button>
+      <button id="nav-gacha" onclick="switchView('gacha')" class="btn-pop flex-1 py-2 px-3 rounded-xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-1.5 bg-white text-slate-600 border-2 border-slate-200 hover:bg-pink-50">
+        <span> capsules</span><span class="text-base">🔮</span> <span>ガチャ</span>
+        <span id="gacha-badge" class="hidden bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full animate-bounce">引ける!</span>
+      </button>
+      <button id="nav-avatar" onclick="switchView('avatar')" class="btn-pop flex-1 py-2 px-3 rounded-xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-1.5 bg-white text-slate-600 border-2 border-slate-200 hover:bg-amber-50">
+        <span>👕</span> <span>きせかえ・図鑑</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- メインコンテンツ領域 -->
+  <main class="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-6 py-5">
+
+    <!-- ==================== 1. ホーム（単元選択）画面 ==================== -->
+    <section id="view-home" class="space-y-6">
+      <!-- ウェルカム＆総合ステータスバナー -->
+      <div class="bg-white rounded-3xl p-4 sm:p-6 border-4 border-sky-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div id="home-avatar-preview" class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-4 border-sky-400 shadow-md flex items-center justify-center shrink-0 overflow-hidden bg-sky-50">
+            <!-- JS描画 -->
+          </div>
+          <div>
+            <p class="text-xs sm:text-sm font-bold text-sky-600">6年生の算数を完全制覇しよう！</p>
+            <h2 class="text-lg sm:text-2xl font-black text-slate-800 mt-0.5">単元を選んでスタート！</h2>
+            <div class="flex flex-wrap items-center gap-2 mt-2">
+              <span class="text-xs font-bold bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-lg border border-emerald-300">
+                累計正解: <span id="stat-total-correct" class="font-black">0</span>問
+              </span>
+              <span class="text-xs font-bold bg-purple-100 text-purple-800 px-2.5 py-1 rounded-lg border border-purple-300">
+                図鑑コンプ率: <span id="stat-comp-rate" class="font-black">0</span>%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 全単元ミックス（総合テスト）ボタン -->
+        <button onclick="startQuiz('mix')" class="btn-pop w-full sm:w-auto bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 text-white font-black px-5 py-3.5 rounded-2xl shadow-lg shadow-orange-200 border-b-4 border-rose-700 flex items-center justify-center gap-2 text-base sm:text-lg shrink-0">
+          <span class="text-2xl">👑</span>
+          <div class="text-left leading-tight">
+            <div>全単元ミックス</div>
+            <div class="text-[11px] font-bold text-amber-100">総合テスト（コイン1.5倍！）</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- 単元一覧グリッド -->
+      <div>
+        <h3 class="text-base sm:text-lg font-black text-slate-700 mb-3 flex items-center gap-2">
+          <span class="bg-sky-500 text-white w-7 h-7 rounded-lg flex items-center justify-center text-sm">11</span>
+          <span>6年算数の単元リスト</span>
+        </h3>
+        <div id="unit-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <!-- JSで11単元のカードを生成 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 2. クイズ（学習）画面 ==================== -->
+    <section id="view-quiz" class="hidden max-w-3xl mx-auto space-y-4">
+      <!-- クイズ上部バー -->
+      <div class="bg-white rounded-2xl p-3 sm:p-4 border-2 border-sky-200 shadow-sm flex items-center justify-between gap-2">
+        <button onclick="confirmQuitQuiz()" class="btn-pop text-xs sm:text-sm font-extrabold text-slate-500 hover:text-slate-800 bg-slate-100 px-3 py-2 rounded-xl">
+          ← もどる
+        </button>
+        <div class="text-center">
+          <div id="quiz-unit-title" class="text-xs sm:text-sm font-black text-sky-700">単元名</div>
+          <div class="text-xs font-bold text-slate-500">
+            第 <span id="quiz-current-num" class="text-base font-black text-slate-800">1</span> / <span id="quiz-total-num">5</span> 問
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span id="quiz-streak-badge" class="hidden text-xs font-black bg-orange-100 text-orange-600 border border-orange-300 px-2.5 py-1 rounded-full">
+            🔥 <span id="quiz-streak-count">2</span>連続!
+          </span>
+        </div>
+      </div>
+
+      <!-- プログレスバー -->
+      <div class="w-full h-3 bg-sky-100 rounded-full overflow-hidden border border-sky-200">
+        <div id="quiz-progress-bar" class="h-full bg-gradient-to-r from-sky-400 to-indigo-500 transition-all duration-300" style="width: 20%;"></div>
+      </div>
+
+      <!-- 問題カード -->
+      <div class="bg-white rounded-3xl p-5 sm:p-7 border-4 border-sky-200 shadow-md space-y-5">
+        <!-- 難易度＆獲得コイン目安 -->
+        <div class="flex items-center justify-between">
+          <span id="quiz-diff-badge" class="text-xs font-extrabold px-3 py-1 rounded-full bg-sky-100 text-sky-800">標準レベル</span>
+          <span class="text-xs font-extrabold text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+            正解で +<span id="quiz-reward-preview">15</span>🪙
+          </span>
+        </div>
+
+        <!-- 問題文 -->
+        <div id="quiz-question-text" class="text-lg sm:text-xl font-extrabold text-slate-800 leading-relaxed">
+          問題文がここに表示されます
+        </div>
+
+        <!-- 図形・グラフSVG表示エリア（必要な問題のみ表示） -->
+        <div id="quiz-visual-box" class="hidden bg-slate-50 rounded-2xl p-4 border-2 border-slate-200 flex justify-center items-center overflow-x-auto">
+          <!-- SVG描画 -->
+        </div>
+
+        <!-- 選択肢ボタンエリア -->
+        <div id="quiz-choices-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <!-- JSで4択ボタン生成 -->
+        </div>
+
+        <!-- 解答後の解説＆次へエリア -->
+        <div id="quiz-feedback-area" class="hidden rounded-2xl p-4 sm:p-5 border-2 space-y-3 animate-fade-in">
+          <div class="flex items-center gap-2.5">
+            <span id="feedback-icon" class="text-3xl">🎉</span>
+            <div>
+              <div id="feedback-title" class="text-lg sm:text-xl font-black">大正解！</div>
+              <div id="feedback-coin-msg" class="text-xs sm:text-sm font-extrabold text-amber-700"></div>
+            </div>
+          </div>
+          <div class="bg-white/90 rounded-xl p-3.5 text-sm sm:text-base text-slate-700 leading-relaxed border border-slate-200">
+            <span class="font-black text-sky-700 block mb-1">💡 かいせつ</span>
+            <div id="feedback-explanation"></div>
+          </div>
+          <button id="quiz-next-btn" onclick="nextQuestion()" class="btn-pop w-full py-3.5 rounded-2xl font-black text-white text-base sm:text-lg bg-sky-500 hover:bg-sky-600 shadow-md border-b-4 border-sky-700">
+            次の問題へ ➔
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 2.5 クイズ結果リザルト画面 ==================== -->
+    <section id="view-result" class="hidden max-w-xl mx-auto">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border-4 border-amber-300 shadow-xl text-center space-y-6">
+        <div class="text-5xl sm:text-6xl">🏆</div>
+        <div>
+          <p id="result-unit-name" class="text-sm font-extrabold text-sky-600">単元クリア！</p>
+          <h2 class="text-2xl sm:text-3xl font-black text-slate-800 mt-1">おつかれさまでした！</h2>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border-2 border-slate-200">
+          <div class="bg-white p-3 rounded-xl border border-slate-200">
+            <div class="text-xs font-bold text-slate-500">せいかい数</div>
+            <div class="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">
+              <span id="result-correct-count">5</span> <span class="text-base text-slate-500">/ <span id="result-total-count">5</span></span>
+            </div>
+          </div>
+          <div class="bg-white p-3 rounded-xl border border-slate-200">
+            <div class="text-xs font-bold text-slate-500">獲得コイン</div>
+            <div class="text-2xl sm:text-3xl font-black text-amber-500 mt-1">
+              +<span id="result-earned-coins">100</span>🪙
+            </div>
+          </div>
+        </div>
+
+        <div id="result-gacha-invite" class="hidden bg-gradient-to-r from-pink-100 to-purple-100 border-2 border-pink-300 rounded-2xl p-3.5 text-sm font-extrabold text-pink-800">
+          ✨ コインが100枚以上たまったよ！ガチャを引いて新しいアバターをゲットしよう！
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button onclick="switchView('home')" class="btn-pop flex-1 py-3.5 rounded-2xl font-black text-slate-700 bg-slate-100 hover:bg-slate-200 border-b-4 border-slate-300">
+            単元一覧へ
+          </button>
+          <button onclick="switchView('gacha')" class="btn-pop flex-1 py-3.5 rounded-2xl font-black text-white bg-gradient-to-r from-pink-500 to-purple-600 shadow-md border-b-4 border-purple-800">
+            🔮 ガチャへ行く！
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 3. ガチャ画面 ==================== -->
+    <section id="view-gacha" class="hidden max-w-2xl mx-auto space-y-5">
+      <div class="bg-gradient-to-b from-indigo-900 via-purple-900 to-slate-900 text-white rounded-3xl p-5 sm:p-8 border-4 border-amber-400 shadow-2xl text-center relative overflow-hidden">
+        <!-- 背景装飾 -->
+        <div class="absolute top-3 left-4 text-2xl opacity-30">✨</div>
+        <div class="absolute bottom-6 right-6 text-3xl opacity-30">🌟</div>
+
+        <span class="inline-block bg-amber-400 text-slate-900 font-black text-xs px-3 py-1 rounded-full mb-2">
+          アバターアイテムを手に入れよう！
+        </span>
+        <h2 class="text-2xl sm:text-3xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-pink-300">
+          ミラクル☆算数ガチャ
+        </h2>
+
+        <!-- ガチャマシン＆演出ステージ -->
+        <div id="gacha-stage" class="my-6 h-56 sm:h-64 bg-slate-800/80 rounded-3xl border-2 border-purple-400/50 flex flex-col items-center justify-center relative overflow-hidden p-4">
+          <!-- 待機中のマシン表示 -->
+          <div id="gacha-idle-display" class="flex flex-col items-center">
+            <div class="text-7xl sm:text-8xl drop-shadow-[0_0_15px_rgba(251,191,36,0.6)]">🎰</div>
+            <p class="text-xs sm:text-sm text-purple-200 font-bold mt-3">
+              キャラクター・アクセサリー・背景・称号が当たる！
+            </p>
+          </div>
+
+          <!-- カプセルアニメーション表示 -->
+          <div id="gacha-capsule-display" class="hidden flex flex-col items-center">
+            <div id="gacha-capsule-svg" class="w-28 h-28 sm:w-32 sm:h-32"></div>
+            <p class="text-sm font-black text-amber-300 mt-2 animate-pulse">カプセル開封中...！</p>
+          </div>
+
+          <!-- 結果表示 -->
+          <div id="gacha-result-display" class="hidden flex flex-col items-center anim-pop">
+            <span id="gacha-res-rarity" class="text-xs font-black px-3 py-0.5 rounded-full mb-1.5">SSR</span>
+            <div id="gacha-res-icon" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-4 flex items-center justify-center bg-white shadow-lg mb-2">
+              <!-- アイテムプレビュー -->
+            </div>
+            <div id="gacha-res-name" class="text-lg sm:text-xl font-black text-white">アイテム名</div>
+            <div id="gacha-res-new-badge" class="text-xs font-bold text-emerald-300 mt-0.5">✨ NEWアイテム！</div>
+          </div>
+        </div>
+
+        <!-- 提供割合表示 -->
+        <div class="flex flex-wrap justify-center gap-2 text-[11px] font-bold text-purple-200 mb-5">
+          <span class="bg-white/10 px-2.5 py-1 rounded-lg">N (ノーマル): 45%</span>
+          <span class="bg-sky-500/20 text-sky-200 px-2.5 py-1 rounded-lg">R (レア): 30%</span>
+          <span class="bg-amber-500/20 text-amber-200 px-2.5 py-1 rounded-lg">SR (スーパーレア): 18%</span>
+          <span class="bg-rose-500/30 text-rose-200 px-2.5 py-1 rounded-lg">UR (ウルトラレア): 7%</span>
+        </div>
+
+        <!-- ガチャ実行ボタン -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <button id="btn-pull-1" onclick="pullGacha(1)" class="btn-pop flex-1 max-w-xs mx-auto sm:mx-0 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-900 font-black py-3.5 px-6 rounded-2xl shadow-lg border-b-4 border-orange-700 flex items-center justify-center gap-2 text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed">
+            <span>🔮 1回まわす</span>
+            <span class="bg-slate-900/20 px-2.5 py-0.5 rounded-full text-sm">100🪙</span>
+          </button>
+        </div>
+        <p id="gacha-shortage-msg" class="hidden text-xs font-bold text-rose-300 mt-3">
+          ※ コインが足りません！算数の問題を解いてコインを集めよう！
+        </p>
+      </div>
+    </section>
+
+    <!-- ==================== 4. アバター着せ替え＆図鑑画面 ==================== -->
+    <section id="view-avatar" class="hidden space-y-6">
+      <!-- 上部：現在のアバタープレビュー＆装備中パーツ -->
+      <div class="bg-white rounded-3xl p-5 sm:p-6 border-4 border-amber-200 shadow-sm flex flex-col md:flex-row items-center gap-6">
+        <!-- 大きなアバタープレビュー -->
+        <div class="flex flex-col items-center shrink-0">
+          <div id="customizer-avatar-preview" class="w-36 h-36 sm:w-44 sm:h-44 rounded-3xl border-4 border-amber-400 shadow-lg flex items-center justify-center overflow-hidden bg-sky-50 relative">
+            <!-- JS描画 -->
+          </div>
+          <div id="customizer-title-preview" class="mt-2.5 px-4 py-1 rounded-full bg-amber-100 border-2 border-amber-300 text-amber-900 font-black text-xs sm:text-sm">
+            算数見習い
+          </div>
+        </div>
+
+        <!-- 装備中スロット一覧 & 図鑑進捗 -->
+        <div class="flex-1 w-full space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 class="text-xl font-black text-slate-800">アバターきせかえ・図鑑</h2>
+            <div class="bg-purple-100 text-purple-900 border border-purple-300 px-3 py-1 rounded-full text-xs sm:text-sm font-black">
+              図鑑コンプ率: <span id="dex-progress-text">0 / 28 (0%)</span>
+            </div>
+          </div>
+
+          <!-- 現在の装備4スロット -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div class="bg-slate-50 p-2.5 rounded-2xl border-2 border-slate-200 text-center">
+              <div class="text-[11px] font-bold text-slate-400">キャラクター</div>
+              <div id="slot-char-name" class="text-xs sm:text-sm font-black text-slate-700 truncate mt-0.5">しばいぬ</div>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-2xl border-2 border-slate-200 text-center">
+              <div class="text-[11px] font-bold text-slate-400">アクセサリー</div>
+              <div id="slot-acc-name" class="text-xs sm:text-sm font-black text-slate-700 truncate mt-0.5">なし</div>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-2xl border-2 border-slate-200 text-center">
+              <div class="text-[11px] font-bold text-slate-400">はいけい</div>
+              <div id="slot-bg-name" class="text-xs sm:text-sm font-black text-slate-700 truncate mt-0.5">あおぞら</div>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-2xl border-2 border-slate-200 text-center">
+              <div class="text-[11px] font-bold text-slate-400">しょうごう</div>
+              <div id="slot-title-name" class="text-xs sm:text-sm font-black text-slate-700 truncate mt-0.5">算数見習い</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- カテゴリ切替タブ -->
+      <div class="bg-white rounded-3xl p-4 sm:p-6 border-2 border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-wrap gap-2 border-b-2 border-slate-100 pb-3">
+          <button onclick="filterAvatarTab('char')" id="tab-av-char" class="av-tab btn-pop px-4 py-2 rounded-xl font-extrabold text-xs sm:text-sm bg-sky-500 text-white">
+            🐶 キャラクター
+          </button>
+          <button onclick="filterAvatarTab('acc')" id="tab-av-acc" class="av-tab btn-pop px-4 py-2 rounded-xl font-extrabold text-xs sm:text-sm bg-slate-100 text-slate-600">
+            👑 アクセサリー
+          </button>
+          <button onclick="filterAvatarTab('bg')" id="tab-av-bg" class="av-tab btn-pop px-4 py-2 rounded-xl font-extrabold text-xs sm:text-sm bg-slate-100 text-slate-600">
+            🌈 はいけい
+          </button>
+          <button onclick="filterAvatarTab('title')" id="tab-av-title" class="av-tab btn-pop px-4 py-2 rounded-xl font-extrabold text-xs sm:text-sm bg-slate-100 text-slate-600">
+            🏷️ しょうごう
+          </button>
+        </div>
+
+        <!-- アイテム図鑑グリッド -->
+        <div id="avatar-items-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <!-- JSでアイテムカード生成 -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 確認モーダル（alert/confirmの代替） -->
+  <div id="custom-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full border-4 border-sky-300 shadow-2xl text-center space-y-4 anim-pop">
+      <div class="text-4xl">🤔</div>
+      <h3 id="modal-title" class="text-lg font-black text-slate-800">確認</h3>
+      <p id="modal-message" class="text-sm font-bold text-slate-600">学習を中断してホームに戻りますか？</p>
+      <div class="flex gap-3 pt-2">
+        <button onclick="closeModal()" class="btn-pop flex-1 py-2.5 rounded-xl font-extrabold bg-slate-100 text-slate-600">
+          つづける
+        </button>
+        <button id="modal-confirm-btn" class="btn-pop flex-1 py-2.5 rounded-xl font-extrabold bg-rose-500 text-white">
+          もどる
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       1. サウンドエフェクト（Web Audio API 合成音）
+    ========================================================================= */
+    const SoundFX = {
+      ctx: null,
+      muted: false,
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+      playTone(freq, type, duration, delay = 0, vol = 0.15) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(this.ctx.currentTime + delay);
+        osc.stop(this.ctx.currentTime + delay + duration);
+      },
+      correct() {
+        // ピンポン♪（明るい2音）
+        this.playTone(659.25, 'sine', 0.15, 0, 0.2);     // E5
+        this.playTone(880.00, 'sine', 0.35, 0.12, 0.22); // A5
+      },
+      wrong() {
+        // ブブー（低めの2音）
+        this.playTone(185.00, 'sawtooth', 0.18, 0, 0.12);
+        this.playTone(155.56, 'sawtooth', 0.3, 0.16, 0.12);
+      },
+      coin() {
+        // チャリン！
+        this.playTone(987.77, 'sine', 0.1, 0, 0.15);     // B5
+        this.playTone(1318.51, 'sine', 0.3, 0.08, 0.18); // E6
+      },
+      gachaSpin() {
+        // ドラムロール風
+        for (let i = 0; i < 8; i++) {
+          this.playTone(300 + i * 40, 'triangle', 0.08, i * 0.09, 0.12);
+        }
+      },
+      gachaOpen(rarity) {
+        if (rarity === 'UR' || rarity === 'SR') {
+          // ファンファーレ
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((n, idx) => this.playTone(n, 'triangle', 0.25, idx * 0.1, 0.2));
+        } else {
+          this.playTone(523.25, 'sine', 0.15, 0, 0.18);
+          this.playTone(783.99, 'sine', 0.3, 0.12, 0.18);
+        }
+      },
+      click() {
+        this.playTone(500, 'sine', 0.05, 0, 0.08);
+      }
+    };
+
+    /* =========================================================================
+       2. アバターアイテム＆図鑑データ定義（全28種）
+    ========================================================================= */
+    const AVATAR_ITEMS = [
+      // --- キャラクター (char) ---
+      { id: 'char_dog', type: 'char', name: 'しばいぬ', rarity: 'N', emoji: '🐶', desc: '元気いっぱいな算数の相棒！' },
+      { id: 'char_cat', type: 'char', name: 'みけねこ', rarity: 'N', emoji: '🐱', desc: 'ひらめきが得意なねこちゃん。' },
+      { id: 'char_rabbit', type: 'char', name: '白うさぎ', rarity: 'N', emoji: '🐰', desc: 'ぴょんと素早く計算するよ！' },
+      { id: 'char_bear', type: 'char', name: 'もりくま', rarity: 'R', emoji: '🐻', desc: 'どっしり構えて難問もクリア！' },
+      { id: 'char_panda', type: 'char', name: 'パンダ先輩', rarity: 'R', emoji: '🐼', desc: '白黒はっきり答えを出すよ。' },
+      { id: 'char_penguin', type: 'char', name: 'ペンギン博士', rarity: 'SR', emoji: '🐧', desc: '図形とグラフが大好きな博士。' },
+      { id: 'char_robot', type: 'char', name: 'AIロボ6号', rarity: 'SR', emoji: '🤖', desc: '最新チップ搭載の計算マシン！' },
+      { id: 'char_dragon', type: 'char', name: '黄金ドラゴン', rarity: 'UR', emoji: '🐲', desc: '全単元制覇を導く伝説の竜！' },
+
+      // --- アクセサリー (acc) ---
+      { id: 'acc_none', type: 'acc', name: 'なし', rarity: 'N', emoji: '', desc: 'シンプルイズベスト！' },
+      { id: 'acc_ribbon', type: 'acc', name: '赤いリボン', rarity: 'N', emoji: '🎀', desc: 'おしゃれなワンポイント。' },
+      { id: 'acc_glasses', type: 'acc', name: 'ひらめきメガネ', rarity: 'R', emoji: '👓', desc: 'かけると公式が思い浮かぶ！？' },
+      { id: 'acc_gradcap', type: 'acc', name: '卒業アカデミック帽', rarity: 'R', emoji: '🎓', desc: '6年生の誇りを感じる帽子。' },
+      { id: 'acc_headphones', type: 'acc', name: '集中ヘッドホン', rarity: 'SR', emoji: '🎧', desc: '雑音をシャットアウトして集中！' },
+      { id: 'acc_crown', type: 'acc', name: '王者のクラウン', rarity: 'UR', emoji: '👑', desc: '算数キングの証である黄金の冠。' },
+
+      // --- 背景フレーム (bg) ---
+      { id: 'bg_sky', type: 'bg', name: 'あおぞら', rarity: 'N', css: 'background: linear-gradient(135deg, #e0f2fe, #7dd3fc);', desc: 'さわやかな青空の背景。' },
+      { id: 'bg_meadow', type: 'bg', name: 'みどりの草原', rarity: 'N', css: 'background: linear-gradient(135deg, #dcfce7, #86efac);', desc: 'リラックスできる緑の草原。' },
+      { id: 'bg_sunset', type: 'bg', name: 'ゆうやけ空', rarity: 'R', css: 'background: linear-gradient(135deg, #ffedd5, #fdba74, #fca5a5);', desc: '放課後の勉強を応援する夕焼け。' },
+      { id: 'bg_cyber', type: 'bg', name: 'サイバー空間', rarity: 'SR', css: 'background: linear-gradient(135deg, #1e1b4b, #312e81, #06b6d4);', desc: 'デジタルな計算空間。' },
+      { id: 'bg_space', type: 'bg', name: '銀河ユニバース', rarity: 'SR', css: 'background: radial-gradient(circle, #4c1d95, #0f172a);', desc: '無限に広がる宇宙の背景。' },
+      { id: 'bg_rainbow', type: 'bg', name: 'レインボーオーラ', rarity: 'UR', css: 'background: linear-gradient(135deg, #fecdd3, #fef08a, #bbf7d0, #bae6fd, #e9d5ff);', desc: '7色に輝く超レア背景！' },
+
+      // --- 称号 (title) ---
+      { id: 'title_beginner', type: 'title', name: '算数見習い', rarity: 'N', desc: '冒険の始まり！' },
+      { id: 'title_calc', type: 'title', name: '計算スピードスター', rarity: 'N', desc: '分数も小数の計算もおまかせ！' },
+      { id: 'title_geo', type: 'title', name: '図形クリエイター', rarity: 'R', desc: '面積も体積もバッチリ見抜く！' },
+      { id: 'title_ratio', type: 'title', name: '比例と比の達人', rarity: 'R', desc: '数の関係を読み解くプロ。' },
+      { id: 'title_data', type: 'title', name: 'データ分析官', rarity: 'SR', desc: 'グラフや平均値から真実を導く！' },
+      { id: 'title_genius', type: 'title', name: '6年算数の天才', rarity: 'SR', desc: 'クラスみんなが頼りにする存在。' },
+      { id: 'title_legend', type: 'title', name: '伝説の算数マスター', rarity: 'UR', desc: 'すべての単元を極めし最高峰の称号！' }
+    ];
+
+    /* =========================================================================
+       3. ユーザーデータ状態管理（localStorage連携）
+    ========================================================================= */
+    const STORAGE_KEY = 'grade6_math_adventure_v1';
+
+    let userState = {
+      coins: 100, // 初回から1回ガチャが引けるように100コインプレゼント
+      unlockedItems: ['char_dog', 'acc_none', 'bg_sky', 'title_beginner'],
+      equipped: {
+        char: 'char_dog',
+        acc: 'acc_none',
+        bg: 'bg_sky',
+        title: 'title_beginner'
+      },
+      unitStats: {}, // { unitId: { correct: 0, played: 0 } }
+      totalCorrect: 0,
+      muted: false
+    };
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          userState = { ...userState, ...parsed };
+          userState.equipped = { ...userState.equipped, ...(parsed.equipped || {}) };
+        }
+      } catch (e) {
+        console.warn('データの読み込みに失敗しました:', e);
+      }
+      SoundFX.muted = !!userState.muted;
+      updateMuteIcon();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(userState));
+      } catch (e) {
+        console.warn('データの保存に失敗しました:', e);
+      }
+    }
+
+    /* =========================================================================
+       4. 小学6年生 算数 全11単元定義＆問題ジェネレーター
+    ========================================================================= */
+    // 分数HTMLヘルパー
+    const frac = (n, d) => `<span class="frac"><span class="frac-num">${n}</span><span class="frac-den">${d}</span></span>`;
+    const mfrac = (w, n, d) => `<span>${w}</span>${frac(n, d)}`;
+
+    const UNITS = [
+      { id: 'symmetry', name: '1. 対称な図形', icon: '🦋', color: 'border-pink-300 bg-pink-50', desc: '線対称・点対称、対称の軸の数' },
+      { id: 'letters', name: '2. 文字と式', icon: '🔤', color: 'border-indigo-300 bg-indigo-50', desc: 'xやyを使った式、値の求め方' },
+      { id: 'fraction_mul_div', name: '3. 分数のかけ算・わり算', icon: '🍰', color: 'border-amber-300 bg-amber-50', desc: '分数の乗除、逆数、文章題' },
+      { id: 'ratio', name: '4. 比と比の値', icon: '⚖️', color: 'border-emerald-300 bg-emerald-50', desc: '比を簡単にする、等しい比、比の値' },
+      { id: 'enlargement', name: '5. 拡大図と縮図', icon: '🔍', color: 'border-cyan-300 bg-cyan-50', desc: '縮尺の計算、対応する辺と角' },
+      { id: 'circle_area', name: '6. 円の面積', icon: '⭕', color: 'border-rose-300 bg-rose-50', desc: '円の面積公式、複合図形の面積' },
+      { id: 'volume', name: '7. 角柱と円柱の体積', icon: '🧊', color: 'border-blue-300 bg-blue-50', desc: '底面積×高さの計算' },
+      { id: 'approx', name: '8. およその面積と体積', icon: '🗾', color: 'border-teal-300 bg-teal-50', desc: '身近な形を見立てて概算する' },
+      { id: 'proportion', name: '9. 比例と反比例', icon: '📈', color: 'border-purple-300 bg-purple-50', desc: '式、表の穴埋め、グラフの特徴' },
+      { id: 'combinations', name: '10. 並べ方と組み合わせ', icon: '🎲', color: 'border-orange-300 bg-orange-50', desc: '場合の数、順列と組み合わせ' },
+      { id: 'data', name: '11. データの調べ方', icon: '📊', color: 'border-lime-300 bg-lime-50', desc: '平均値・中央値・最頻値、柱状グラフ' }
+    ];
+
+    // 配列シャッフル
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // 最大公約数
+    function gcd(a, b) {
+      return b === 0 ? a : gcd(b, a % b);
+    }
+
+    // 問題データベース＆動的生成関数
+    function generateQuestionForUnit(unitId) {
+      const rInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      switch (unitId) {
+        /* -----------------------------------------------------------
+           1. 対称な図形
+        ----------------------------------------------------------- */
+        case 'symmetry': {
+          const bank = [
+            {
+              diff: '基本', coins: 15,
+              q: '次の図形のうち、<strong>「線対称」であり、「点対称」でもある</strong>図形はどれでしょう？',
+              svg: `<svg width="240" height="90" viewBox="0 0 240 90">
+                <polygon points="45,15 15,75 75,75" fill="#fbcfe8" stroke="#db2777" stroke-width="2.5"/>
+                <text x="45" y="88" font-size="11" text-anchor="middle" fill="#831843" font-weight="bold">正三角形</text>
+                <rect x="95" y="20" width="50" height="50" fill="#bae6fd" stroke="#0284c7" stroke-width="2.5"/>
+                <text x="120" y="88" font-size="11" text-anchor="middle" fill="#0c4a6e" font-weight="bold">正方形</text>
+                <polygon points="180,20 225,20 210,70 165,70" fill="#fef08a" stroke="#ca8a04" stroke-width="2.5"/>
+                <text x="195" y="88" font-size="11" text-anchor="middle" fill="#713f12" font-weight="bold">平行四辺形</text>
+              </svg>`,
+              choices: ['正方形', '正三角形', '平行四辺形（長方形でない）', '二等辺三角形'],
+              answer: '正方形',
+              exp: '正方形は対称の軸が4本ある線対称な図形で、180度回転させてもぴったり重なる点対称な図形でもあります。正三角形は線対称のみ、平行四辺形は点対称のみです。'
+            },
+            {
+              diff: '標準', coins: 15,
+              q: '「正六角形」には、対称の軸が全部で何本ありますか？',
+              svg: `<svg width="140" height="120" viewBox="0 0 140 120">
+                <polygon points="70,12 118,38 118,82 70,108 22,82 22,38" fill="#fce7f3" stroke="#db2777" stroke-width="3"/>
+                <line x1="70" y1="6" x2="70" y2="114" stroke="#9d174d" stroke-width="1.5" stroke-dasharray="4 3"/>
+                <line x1="16" y1="60" x2="124" y2="60" stroke="#9d174d" stroke-width="1.5" stroke-dasharray="4 3"/>
+              </svg>`,
+              choices: ['6本', '3本', '4本', '12本'],
+              answer: '6本',
+              exp: '正多角形の対称の軸の数は、頂点（辺）の数と同じになります。正六角形なので、向かい合う頂点を結ぶ3本と、向かい合う辺の真ん中を結ぶ3本で合計6本です！'
+            },
+            {
+              diff: '標準', coins: 20,
+              q: '点対称な図形で、対応する2つの点を結ぶ直線は、必ずどこを通りますか？',
+              choices: ['対称の中心', '対称の軸', '図形のいちばん上の頂点', '辺の真ん中'],
+              answer: '対称の中心',
+              exp: '点対称な図形では、対応する2つの点を結ぶ直線は必ず「対称の中心」を通り、対称の中心から2つの点までの長さは等しくなります。'
+            },
+            {
+              diff: '応用', coins: 20,
+              q: 'アルファベットの「N」「S」「Z」に共通する性質はどれでしょう？',
+              svg: `<svg width="210" height="60" viewBox="0 0 210 60">
+                <text x="40" y="45" font-size="40" font-weight="900" fill="#be185d" text-anchor="middle">N</text>
+                <text x="105" y="45" font-size="40" font-weight="900" fill="#be185d" text-anchor="middle">S</text>
+                <text x="170" y="45" font-size="40" font-weight="900" fill="#be185d" text-anchor="middle">Z</text>
+              </svg>`,
+              choices: ['点対称だが線対称ではない', '線対称だが点対称ではない', '線対称でも点対称でもある', 'どちらでもない'],
+              answer: '点対称だが線対称ではない',
+              exp: 'N・S・Zは180度回転させると元の形と重なる「点対称」な形ですが、折って重なる線（対称の軸）は1本もありません。'
+            }
+          ];
+          return bank[rInt(0, bank.length - 1)];
+        }
+
+        /* -----------------------------------------------------------
+           2. 文字と式
+        ----------------------------------------------------------- */
+        case 'letters': {
+          const mode = rInt(0, 2);
+          if (mode === 0) {
+            const price = rInt(6, 12) * 10;
+            const box = rInt(30, 80);
+            const xVal = rInt(4, 9);
+            const ans = price * xVal + box;
+            return {
+              diff: '基本', coins: 15,
+              q: `1個 ${price}円のおかしを <strong>x 個</strong>買い、${box}円の箱に入れてもらいました。代金を y 円として、x = ${xVal} のときの y の値を求めましょう。`,
+              choices: [`${ans}円`, `${price * xVal}円`, `${(price + box) * xVal}円`, `${ans + 20}円`],
+              answer: `${ans}円`,
+              exp: `式は「y = ${price} × x + ${box}」になります。x に ${xVal} をあてはめると、${price} × ${xVal} + ${box} = ${price * xVal} + ${box} = ${ans}（円）です。`
+            };
+          } else if (mode === 1) {
+            const a = rInt(3, 8);
+            const b = rInt(5, 15);
+            const x = rInt(4, 9);
+            const y = a * x - b;
+            return {
+              diff: '標準', coins: 15,
+              q: `式 <strong>y = ${a} × x − ${b}</strong> で、y の値が <strong>${y}</strong> になるとき、x の値はいくつですか？`,
+              choices: [`${x}`, `${x + 1}`, `${x - 1}`, `${a + b}`],
+              answer: `${x}`,
+              exp: `${a} × x − ${b} = ${y} なので、${a} × x = ${y} + ${b} = ${y + b}。よって x = ${y + b} ÷ ${a} = ${x} です。`
+            };
+          } else {
+            return {
+              diff: '応用', coins: 20,
+              q: '上底が x cm、下底が 8 cm、高さが 6 cm の台形の面積を y cm² とします。x と y の関係を表す式はどれ？',
+              svg: `<svg width="200" height="95" viewBox="0 0 200 95">
+                <polygon points="65,20 125,20 155,75 35,75" fill="#e0e7ff" stroke="#4f46e5" stroke-width="2.5"/>
+                <line x1="65" y1="20" x2="65" y2="75" stroke="#4f46e5" stroke-width="1.5" stroke-dasharray="3 3"/>
+                <text x="95" y="15" font-size="12" font-weight="bold" text-anchor="middle" fill="#312e81">x cm</text>
+                <text x="95" y="90" font-size="12" font-weight="bold" text-anchor="middle" fill="#312e81">8 cm</text>
+                <text x="45" y="52" font-size="11" font-weight="bold" text-anchor="middle" fill="#4338ca">6cm</text>
+              </svg>`,
+              choices: ['y = (x + 8) × 6 ÷ 2', 'y = x × 8 × 6 ÷ 2', 'y = (x + 8) × 6', 'y = x + 8 ÷ 2'],
+              answer: 'y = (x + 8) × 6 ÷ 2',
+              exp: '台形の面積は「(上底 ＋ 下底) × 高さ ÷ 2」で求めます。上底に x をあてはめると y = (x + 8) × 6 ÷ 2 になります。'
+            };
+          }
+        }
+
+        /* -----------------------------------------------------------
+           3. 分数のかけ算・わり算
+        ----------------------------------------------------------- */
+        case 'fraction_mul_div': {
+          const mode = rInt(0, 2);
+          if (mode === 0) {
+            // 分数 × 分数
+            const n1 = 3, d1 = 4, n2 = 2, d2 = 5;
+            return {
+              diff: '基本', coins: 15,
+              q: `次の計算をしましょう。<br><div class="mt-2 text-2xl">${frac(n1, d1)} × ${frac(n2, d2)}</div>`,
+              choices: [frac(3, 10), frac(6, 20), frac(5, 9), frac(15, 8)],
+              answer: frac(3, 10),
+              exp: `分母どうし・分子どうしをかけます。途中で2で約分できるので、${frac(3, 2)} × ${frac(1, 5)} = ${frac(3, 10)} になります。`
+            };
+          } else if (mode === 1) {
+            // 分数 ÷ 分数
+            return {
+              diff: '標準', coins: 20,
+              q: `次のわり算をしましょう。<br><div class="mt-2 text-2xl">${frac(4, 9)} ÷ ${frac(2, 3)}</div>`,
+              choices: [frac(2, 3), frac(8, 27), frac(3, 2), frac(6, 12)],
+              answer: frac(2, 3),
+              exp: `分数のわり算は、わる数の逆数をかけます。${frac(4, 9)} × ${frac(3, 2)} を約分して計算すると ${frac(2, 3)} になります。`
+            };
+          } else {
+            // 逆数
+            return {
+              diff: '基本', coins: 15,
+              q: `帯分数 <strong>${mfrac(1, 2, 3)}</strong> の逆数はどれでしょう？`,
+              choices: [frac(3, 5), mfrac(1, 3, 2), frac(5, 3), frac(2, 3)],
+              answer: frac(3, 5),
+              exp: `まず仮分数に直すと ${mfrac(1, 2, 3)} = ${frac(5, 3)} です。分母と分子を入れかえると、逆数は ${frac(3, 5)} になります。`
+            };
+          }
+        }
+
+        /* -----------------------------------------------------------
+           4. 比と比の値
+        ----------------------------------------------------------- */
+        case 'ratio': {
+          const mode = rInt(0, 2);
+          if (mode === 0) {
+            const k = rInt(3, 7);
+            const a = 3 * k;
+            const b = 5 * k;
+            return {
+              diff: '基本', coins: 15,
+              q: `<strong>${a} : ${b}</strong> を、いちばん簡単な整数の比にしましょう。`,
+              choices: ['3 : 5', '5 : 3', `${a/k} : ${b}`, '2 : 3'],
+              answer: '3 : 5',
+              exp: `${a} と ${b} の最大公約数である ${k} で両方の数をわると、${a}÷${k} : ${b}÷${k} = 3 : 5 になります。`
+            };
+          } else if (mode === 1) {
+            const mult = rInt(3, 6);
+            const x = 4 * mult;
+            return {
+              diff: '標準', coins: 15,
+              q: `等しい比になるように、<strong>x</strong> にあてはまる数を求めましょう。<br><div class="mt-2 text-xl">3 : 4 ＝ ${3 * mult} : x</div>`,
+              choices: [`${x}`, `${x - 4}`, `${x + 3}`, `${3 * mult + 1}`],
+              answer: `${x}`,
+              exp: `前の数が 3 から ${3 * mult} へと ${mult} 倍になっているので、後ろの数も ${mult} 倍します。4 × ${mult} = ${x} です。`
+            };
+          } else {
+            return {
+              diff: '応用', coins: 20,
+              q: 'サラダ油と酢を <strong>5 : 2</strong> の割合で混ぜてドレッシングを 210 mL 作ります。サラダ油は何 mL 必要ですか？',
+              choices: ['150 mL', '60 mL', '105 mL', '140 mL'],
+              answer: '150 mL',
+              exp: `全体を 5 + 2 = 7 とすると、サラダ油はそのうちの ${frac(5, 7)} です。210 × ${frac(5, 7)} = 150（mL）になります。`
+            };
+          }
+        }
+
+        /* -----------------------------------------------------------
+           5. 拡大図と縮図
+        ----------------------------------------------------------- */
+        case 'enlargement': {
+          const mode = rInt(0, 1);
+          if (mode === 0) {
+            const cm = rInt(3, 8);
+            const realMeters = cm * 250; // 1:25000 -> 1cm = 250m
+            return {
+              diff: '標準', coins: 20,
+              q: `縮尺 <strong>1 : 25000</strong> の地図で、長さが <strong>${cm} cm</strong> の道路があります。実際の長さは何 m ですか？`,
+              choices: [`${realMeters} m`, `${realMeters * 10} m`, `${cm * 25} m`, `${realMeters / 10} m`],
+              answer: `${realMeters} m`,
+              exp: `実際の長さは地図の 25000倍なので、${cm} × 25000 = ${cm * 25000} cm です。100 cm = 1 m なので、0を2つとって ${realMeters} m になります。`
+            };
+          } else {
+            return {
+              diff: '基本', coins: 15,
+              q: 'ある三角形の <strong>2倍の拡大図</strong> をかきました。もとの三角形の角の大きさが 40° のとき、対応する角の大きさは何度ですか？',
+              svg: `<svg width="220" height="85" viewBox="0 0 220 85">
+                <polygon points="20,70 65,70 40,40" fill="#cffafe" stroke="#0891b2" stroke-width="2"/>
+                <text x="35" y="65" font-size="10" font-weight="bold" fill="#164e63">40°</text>
+                <polygon points="105,75 195,75 145,15" fill="#cffafe" stroke="#0891b2" stroke-width="2.5"/>
+                <text x="132" y="68" font-size="13" font-weight="bold" fill="#0e7490">?°</text>
+              </svg>`,
+              choices: ['40°', '80°', '20°', '140°'],
+              answer: '40°',
+              exp: '拡大図や縮図では、対応する辺の長さは変わりますが、<strong>対応する角の大きさはすべて等しく</strong>なります。よって 40° のままです！'
+            };
+          }
+        }
+
+        /* -----------------------------------------------------------
+           6. 円の面積
+        ----------------------------------------------------------- */
+        case 'circle_area': {
+          const mode = rInt(0, 2);
+          if (mode === 0) {
+            const r = rInt(2, 6);
+            const ans = +(r * r * 3.14).toFixed(2);
+            return {
+              diff: '基本', coins: 15,
+              q: `半径が <strong>${r} cm</strong> の円の面積は何 cm² ですか？（円周率は 3.14 とします）`,
+              svg: `<svg width="120" height="120" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="45" fill="#ffe4e6" stroke="#e11d48" stroke-width="3"/>
+                <line x1="60" y1="60" x2="105" y2="60" stroke="#9f1239" stroke-width="2"/>
+                <circle cx="60" cy="60" r="3" fill="#9f1239"/>
+                <text x="82" y="54" font-size="12" font-weight="bold" text-anchor="middle" fill="#881337">${r}cm</text>
+              </svg>`,
+              choices: [`${ans} cm²`, `${+(r * 2 * 3.14).toFixed(2)} cm²`, `${r * r} cm²`, `${+(ans * 2).toFixed(2)} cm²`],
+              answer: `${ans} cm²`,
+              exp: `円の面積は「半径 × 半径 × 3.14」です。${r} × ${r} × 3.14 = ${r * r} × 3.14 = ${ans}（cm²）になります。`
+            };
+          } else if (mode === 1) {
+            return {
+              diff: '標準', coins: 20,
+              q: '<strong>直径が 10 cm</strong> の半円（円の半分）の面積は何 cm² ですか？（円周率は 3.14）',
+              svg: `<svg width="160" height="90" viewBox="0 0 160 90">
+                <path d="M 20,70 A 60,60 0 0,1 140,70 Z" fill="#ffe4e6" stroke="#e11d48" stroke-width="3"/>
+                <text x="80" y="85" font-size="12" font-weight="bold" text-anchor="middle" fill="#881337">直径 10 cm</text>
+              </svg>`,
+              choices: ['39.25 cm²', '78.5 cm²', '157 cm²', '15.7 cm²'],
+              answer: '39.25 cm²',
+              exp: '直径が10cmなので<strong>半径は 5cm</strong>です！円の面積 5 × 5 × 3.14 = 78.5 を半分（÷2）にして 39.25 cm² です。'
+            };
+          } else {
+            return {
+              diff: '応用', coins: 25,
+              q: '1辺が 10 cm の正方形の中にぴったり入る円があります。正方形から円をのぞいた<strong>色つき部分の面積</strong>は？',
+              svg: `<svg width="120" height="120" viewBox="0 0 120 120">
+                <rect x="15" y="15" width="90" height="90" fill="#fda4af" stroke="#be123c" stroke-width="2.5"/>
+                <circle cx="60" cy="60" r="45" fill="#ffffff" stroke="#be123c" stroke-width="2"/>
+                <text x="60" y="117" font-size="11" font-weight="bold" text-anchor="middle" fill="#881337">1辺 10cm</text>
+              </svg>`,
+              choices: ['21.5 cm²', '78.5 cm²', '100 cm²', '31.4 cm²'],
+              answer: '21.5 cm²',
+              exp: '正方形の面積は 10 × 10 = 100 cm²。中の円は半径5cmなので 5 × 5 × 3.14 = 78.5 cm²。ひき算して 100 − 78.5 = 21.5 cm² です！'
+            };
+          }
+        }
+
+        /* -----------------------------------------------------------
+           7. 角柱と円柱の体積
+        ----------------------------------------------------------- */
+        case 'volume': {
+          const mode = rInt(0, 1);
+          if (mode === 0) {
+            const baseW = 6, baseH = 4, height = rInt(5, 9);
+            const vol = (baseW * baseH / 2) * height;
+            return {
+              diff: '基本', coins: 15,
+              q: `底面が「底辺 ${baseW}cm、高さ ${baseH}cm の三角形」で、高さが <strong>${height} cm</strong> の三角柱の体積は何 cm³ ですか？`,
+              svg: `<svg width="150" height="120" viewBox="0 0 150 120">
+                <polygon points="30,35 110,35 60,15" fill="#bfdbfe" stroke="#2563eb" stroke-width="2"/>
+                <polygon points="30,95 110,95 60,75" fill="#93c5fd" stroke="#2563eb" stroke-width="2"/>
+                <line x1="30" y1="35" x2="30" y2="95" stroke="#2563eb" stroke-width="2"/>
+                <line x1="110" y1="35" x2="110" y2="95" stroke="#2563eb" stroke-width="2"/>
+                <line x1="60" y1="15" x2="60" y2="75" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="3 3"/>
+                <text x="128" y="68" font-size="11" font-weight="bold" fill="#1e40af">${height}cm</text>
+              </svg>`,
+              choices: [`${vol} cm³`, `${vol * 2} cm³`, `${baseW + baseH + height} cm³`, `${vol + 12} cm³`],
+              answer: `${vol} cm³`,
+              exp: `角柱の体積は「底面積 × 高さ」です。底面の三角形は ${baseW} × ${baseH} ÷ 2 = 12 cm²。これに高さ ${height} cm をかけて ${vol} cm³ です。`
+            };
+          } else {
+            const r = 3, h = 5;
+            const vol = +(r * r * 3.14 * h).toFixed(2);
+            return {
+              diff: '標準', coins: 20,
+              q: `底面の<strong>半径が ${r} cm</strong>、高さが <strong>${h} cm</strong> の円柱の体積は何 cm³ ですか？（円周率 3.14）`,
+              svg: `<svg width="140" height="125" viewBox="0 0 140 125">
+                <ellipse cx="70" cy="95" rx="40" ry="14" fill="#93c5fd" stroke="#1d4ed8" stroke-width="2"/>
+                <rect x="30" y="30" width="80" height="65" fill="#bfdbfe" fill-opacity="0.7"/>
+                <line x1="30" y1="30" x2="30" y2="95" stroke="#1d4ed8" stroke-width="2"/>
+                <line x1="110" y1="30" x2="110" y2="95" stroke="#1d4ed8" stroke-width="2"/>
+                <ellipse cx="70" cy="30" rx="40" ry="14" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+                <line x1="70" y1="30" x2="110" y2="30" stroke="#1e3a8a" stroke-width="1.5"/>
+                <text x="90" y="26" font-size="10" font-weight="bold" text-anchor="middle" fill="#1e3a8a">3cm</text>
+                <text x="125" y="66" font-size="11" font-weight="bold" fill="#1e3a8a">5cm</text>
+              </svg>`,
+              choices: [`${vol} cm³`, '47.1 cm³', '94.2 cm³', '28.26 cm³'],
+              answer: `${vol} cm³`,
+              exp: `底面積（円）は 3 × 3 × 3.14 = 28.26 cm²。これに高さ 5 cm をかけると 28.26 × 5 = ${vol} cm³ になります。`
+            };
+          }
+        }
+
+        /* -----------------------------------------------------------
+           8. およその面積と体積
+        ----------------------------------------------------------- */
+        case 'approx': {
+          const bank = [
+            {
+              diff: '基本', coins: 15,
+              q: '東京ドームのグラウンドのように、丸みを帯びたおよそ正方形に近い土地の面積を見積もるとき、どの図形に見立てて計算するのがよいですか？',
+              choices: ['正方形や円', '細長い三角形', 'とても細い長方形', '台形'],
+              answer: '正方形や円',
+              exp: 'およその面積を求めるときは、その形にいちばん近い基本的な図形（正方形・長方形・三角形・円など）に見立てて公式を使います。'
+            },
+            {
+              diff: '標準', coins: 20,
+              q: '縦が約 20 cm、横が約 15 cm、高さが約 10 cm の大きさの「直方体に見立てられる箱」のおよその体積は何 cm³ ですか？',
+              choices: ['約 3000 cm³', '約 300 cm³', '約 45 cm³', '約 30000 cm³'],
+              answer: '約 3000 cm³',
+              exp: '直方体の体積は「たて × よこ × 高さ」なので、20 × 15 × 10 = 3000（cm³）と見積もることができます。'
+            }
+          ];
+          return bank[rInt(0, bank.length - 1)];
+        }
+
+        /* -----------------------------------------------------------
+           9. 比例と反比例
+        ----------------------------------------------------------- */
+        case 'proportion': {
+          const mode = rInt(0, 2);
+          if (mode === 0) {
+            const k = rInt(3, 8);
+            const x = rInt(4, 7);
+            return {
+              diff: '基本', coins: 15,
+              q: `y が x に<strong>比例</strong>し、x = 1 のとき y = ${k} です。x = ${x} のとき y の値はいくつですか？`,
+              choices: [`${k * x}`, `${k + x}`, `${k * x + 1}`, `${x}`],
+              answer: `${k * x}`,
+              exp: `比例の式は「y = 決まった数 × x」です。決まった数が ${k} なので、y = ${k} × ${x} = ${k * x} になります。`
+            };
+          } else if (mode === 1) {
+            // 反比例
+            return {
+              diff: '標準', coins: 20,
+              q: '面積が <strong>24 cm²</strong> の長方形の、横の長さ x cm と縦の長さ y cm の関係について正しいものはどれ？',
+              choices: ['反比例する（y = 24 ÷ x）', '比例する（y = 24 × x）', '比例も反比例もしない', 'x が2倍になると y も2倍になる'],
+              answer: '反比例する（y = 24 ÷ x）',
+              exp: 'x × y = 24（いつも一定）になる関係は「反比例」です。x が2倍、3倍になると、y は 1/2倍、1/3倍になります。'
+            };
+          } else {
+            return {
+              diff: '基本', coins: 15,
+              q: '<strong>比例</strong>の関係を表すグラフの特徴として、正しいものはどれでしょう？',
+              svg: `<svg width="130" height="110" viewBox="0 0 130 110">
+                <line x1="20" y1="90" x2="115" y2="90" stroke="#64748b" stroke-width="2"/>
+                <line x1="20" y1="90" x2="20" y2="10" stroke="#64748b" stroke-width="2"/>
+                <line x1="20" y1="90" x2="105" y2="15" stroke="#9333ea" stroke-width="3"/>
+                <circle cx="20" cy="90" r="4" fill="#9333ea"/>
+                <text x="14" y="103" font-size="11" font-weight="bold" fill="#475569">0</text>
+              </svg>`,
+              choices: ['0の点（原点）を通る直線になる', 'なめらかな曲線になる', '0の点を通らない直線になる', '必ず横ばいの線になる'],
+              answer: '0の点（原点）を通る直線になる',
+              exp: '比例のグラフは、必ず「0の点（原点）」を通るまっすぐな直線になります。反比例のグラフはなめらかな曲線になります。'
+            };
+          }
+        }
+
+        /* -----------------------------------------------------------
+           10. 並べ方と組み合わせ
+        ----------------------------------------------------------- */
+        case 'combinations': {
+          const mode = rInt(0, 1);
+          if (mode === 0) {
+            return {
+              diff: '標準', coins: 20,
+              q: '<strong>A、B、C、D の 4人</strong>が1列に並ぶとき、並べ方は全部で何通りありますか？',
+              choices: ['24通り', '12通り', '16通り', '6通り'],
+              answer: '24通り',
+              exp: '1番目が4通り、2番目が残りの3通り、3番目が2通り、4番目が1通りなので、4 × 3 × 2 × 1 = 24通りになります。'
+            };
+          } else {
+            return {
+              diff: '標準', coins: 20,
+              q: '<strong>5チーム</strong>がバスケットボールの総当たり戦（どのチームとも1回ずつ対戦）をします。試合は全部で何試合ありますか？',
+              choices: ['10試合', '20試合', '25試合', '15試合'],
+              answer: '10試合',
+              exp: '5チームから2チームを選ぶ「組み合わせ」です。(5 × 4) ÷ 2 = 10試合になります。樹形図や表をかいても確認できます！'
+            };
+          }
+        }
+
+        /* -----------------------------------------------------------
+           11. データの調べ方
+        ----------------------------------------------------------- */
+        case 'data': {
+          const mode = rInt(0, 2);
+          if (mode === 0) {
+            return {
+              diff: '基本', coins: 15,
+              q: '5人のテストの点数が <strong>「60点、70点、75点、85点、100点」</strong> でした。このデータの<strong>中央値（メジアン）</strong>は何点ですか？',
+              choices: ['75点', '78点', '80点', '70点'],
+              answer: '75点',
+              exp: 'データを大きさの順に並べたとき、ちょうど真ん中にくる値が「中央値」です。5人の真ん中（3番目）なので 75点です！'
+            };
+          } else if (mode === 1) {
+            return {
+              diff: '基本', coins: 15,
+              q: 'あるクラスで好きな給食を調べたデータで、<strong>いちばん多く出てきた値（人数がもっとも多いもの）</strong>のことを何といいますか？',
+              choices: ['最頻値（モード）', '平均値', '中央値', 'ドットプロット'],
+              answer: '最頻値（モード）',
+              exp: 'データの中で最も多く現れる値のことを「最頻値（さいひんち）」といいます。'
+            };
+          } else {
+            return {
+              diff: '標準', coins: 20,
+              q: '次のドットプロット（5人の読書冊数）の<strong>平均値</strong>は何冊ですか？',
+              svg: `<svg width="220" height="85" viewBox="0 0 220 85">
+                <line x1="20" y1="62" x2="200" y2="62" stroke="#475569" stroke-width="2"/>
+                <text x="40" y="76" font-size="11" font-weight="bold" text-anchor="middle">1</text>
+                <text x="80" y="76" font-size="11" font-weight="bold" text-anchor="middle">2</text>
+                <text x="120" y="76" font-size="11" font-weight="bold" text-anchor="middle">3</text>
+                <text x="160" y="76" font-size="11" font-weight="bold" text-anchor="middle">4</text>
+                <text x="190" y="76" font-size="10" fill="#64748b">(冊)</text>
+                <circle cx="40" cy="52" r="5" fill="#65a30d"/>
+                <circle cx="80" cy="52" r="5" fill="#65a30d"/>
+                <circle cx="80" cy="38" r="5" fill="#65a30d"/>
+                <circle cx="120" cy="52" r="5" fill="#65a30d"/>
+                <circle cx="160" cy="52" r="5" fill="#65a30d"/>
+              </svg>`,
+              choices: ['2.4冊', '2冊', '3冊', '12冊'],
+              answer: '2.4冊',
+              exp: '5人の合計は 1 + 2 + 2 + 3 + 4 = 12冊です。人数（5人）でわると、12 ÷ 5 = 2.4冊になります。'
+            };
+          }
+        }
+      }
+    }
+
+    /* =========================================================================
+       5. アバターSVGレンダリング機能
+    ========================================================================= */
+    function renderAvatarHTML(equippedObj, sizeClass = 'w-full h-full') {
+      const charItem = AVATAR_ITEMS.find(i => i.id === equippedObj.char) || AVATAR_ITEMS[0];
+      const accItem = AVATAR_ITEMS.find(i => i.id === equippedObj.acc);
+      const bgItem = AVATAR_ITEMS.find(i => i.id === equippedObj.bg) || AVATAR_ITEMS.find(i => i.id === 'bg_sky');
+
+      let accOverlay = '';
+      if (accItem && accItem.emoji) {
+        // アクセサリー位置調整
+        const isGlasses = accItem.id === 'acc_glasses';
+        const posStyle = isGlasses
+          ? 'top: 46%; left: 50%; transform: translate(-50%, -50%); font-size: 1.5em;'
+          : 'top: 6%; left: 50%; transform: translateX(-50%); font-size: 1.25em;';
+        accOverlay = `<span style="position: absolute; ${posStyle} line-height: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); pointer-events: none;">${accItem.emoji}</span>`;
+      }
+
+      return `
+        <div class="${sizeClass} relative flex items-center justify-center select-none" style="${bgItem.css}">
+          <span style="font-size: 2.4em; line-height: 1; transform: translateY(6%); filter: drop-shadow(0 3px 3px rgba(0,0,0,0.15));">${charItem.emoji}</span>
+          ${accOverlay}
+        </div>
+      `;
+    }
+
+    function updateAllAvatarDisplays() {
+      const html = renderAvatarHTML(userState.equipped);
+      document.getElementById('header-avatar-box').innerHTML = html;
+      document.getElementById('home-avatar-preview').innerHTML = html;
+      document.getElementById('customizer-avatar-preview').innerHTML = html;
+
+      // 称号更新
+      const titleItem = AVATAR_ITEMS.find(i => i.id === userState.equipped.title) || AVATAR_ITEMS.find(i => i.id === 'title_beginner');
+      document.getElementById('header-title-badge').textContent = titleItem.name;
+      document.getElementById('customizer-title-preview').textContent = titleItem.name;
+
+      // 装備スロット名更新
+      const charItem = AVATAR_ITEMS.find(i => i.id === userState.equipped.char);
+      const accItem = AVATAR_ITEMS.find(i => i.id === userState.equipped.acc);
+      const bgItem = AVATAR_ITEMS.find(i => i.id === userState.equipped.bg);
+      document.getElementById('slot-char-name').textContent = charItem ? charItem.name : '-';
+      document.getElementById('slot-acc-name').textContent = accItem ? accItem.name : 'なし';
+      document.getElementById('slot-bg-name').textContent = bgItem ? bgItem.name : '-';
+      document.getElementById('slot-title-name').textContent = titleItem ? titleItem.name : '-';
+    }
+
+    /* =========================================================================
+       6. コイン＆UI更新機能
+    ========================================================================= */
+    function addCoins(amount) {
+      userState.coins += amount;
+      saveState();
+      updateCoinUI();
+      SoundFX.coin();
+
+      // コイン獲得フローティング演出
+      const container = document.getElementById('coin-float-container');
+      const floater = document.createElement('div');
+      floater.className = 'anim-coin-float font-black text-amber-500 text-base sm:text-lg drop-shadow';
+      floater.textContent = `+${amount}🪙`;
+      container.appendChild(floater);
+      setTimeout(() => floater.remove(), 950);
+    }
+
+    function updateCoinUI() {
+      document.getElementById('coin-count').textContent = userState.coins.toLocaleString();
+      const gachaBadge = document.getElementById('gacha-badge');
+      if (userState.coins >= 100) {
+        gachaBadge.classList.remove('hidden');
+      } else {
+        gachaBadge.classList.add('hidden');
+      }
+
+      // ガチャボタン状態更新
+      const pullBtn = document.getElementById('btn-pull-1');
+      const shortageMsg = document.getElementById('gacha-shortage-msg');
+      if (pullBtn) {
+        if (userState.coins < 100) {
+          pullBtn.disabled = true;
+          shortageMsg.classList.remove('hidden');
+        } else {
+          pullBtn.disabled = false;
+          shortageMsg.classList.add('hidden');
+        }
+      }
+    }
+
+    function toggleMute() {
+      userState.muted = !userState.muted;
+      SoundFX.muted = userState.muted;
+      saveState();
+      updateMuteIcon();
+      if (!userState.muted) SoundFX.click();
+    }
+
+    function updateMuteIcon() {
+      document.getElementById('mute-btn').textContent = userState.muted ? '🔇' : '🔊';
+    }
+
+    /* =========================================================================
+       7. 画面切り替え＆ホーム単元リスト描画
+    ========================================================================= */
+    let currentView = 'home';
+
+    function switchView(viewName) {
+      SoundFX.click();
+      currentView = viewName;
+
+      // 全セクション非表示
+      ['home', 'quiz', 'result', 'gacha', 'avatar'].forEach(v => {
+        document.getElementById(`view-${v}`).classList.add('hidden');
+      });
+      document.getElementById(`view-${viewName}`).classList.remove('hidden');
+
+      // ナビボタンのスタイル更新
+      const navMap = { home: 'nav-home', gacha: 'nav-gacha', avatar: 'nav-avatar' };
+      Object.entries(navMap).forEach(([key, btnId]) => {
+        const btn = document.getElementById(btnId);
+        if (key === viewName || (viewName === 'quiz' && key === 'home') || (viewName === 'result' && key === 'home')) {
+          btn.className = 'btn-pop flex-1 py-2 px-3 rounded-xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-1.5 bg-sky-500 text-white shadow-md shadow-sky-200';
+        } else {
+          btn.className = 'btn-pop flex-1 py-2 px-3 rounded-xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-1.5 bg-white text-slate-600 border-2 border-slate-200 hover:bg-sky-50';
+        }
+      });
+
+      if (viewName === 'home') renderHomeUnits();
+      if (viewName === 'gacha') {
+        updateCoinUI();
+        resetGachaStage();
+      }
+      if (viewName === 'avatar') renderAvatarCustomizer();
+    }
+
+    function renderHomeUnits() {
+      // 統計更新
+      document.getElementById('stat-total-correct').textContent = userState.totalCorrect;
+      const compRate = Math.round((userState.unlockedItems.length / AVATAR_ITEMS.length) * 100);
+      document.getElementById('stat-comp-rate').textContent = compRate;
+
+      const grid = document.getElementById('unit-grid');
+      grid.innerHTML = '';
+
+      UNITS.forEach(unit => {
+        const stat = userState.unitStats[unit.id] || { correct: 0, cleared: 0 };
+        const hasStar = stat.cleared > 0;
+
+        const card = document.createElement('div');
+        card.className = `btn-pop cursor-pointer rounded-2xl p-4 border-3 ${unit.color} shadow-sm hover:shadow-md flex flex-col justify-between gap-3 transition`;
+        card.onclick = () => startQuiz(unit.id);
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <span class="text-3xl bg-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-xs border border-slate-200 shrink-0">${unit.icon}</span>
+              <div>
+                <h4 class="font-black text-slate-800 text-sm sm:text-base leading-snug">${unit.name}</h4>
+                <p class="text-xs font-bold text-slate-500 mt-0.5">${unit.desc}</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-black/5 text-xs font-extrabold">
+            <span class="text-slate-600">正解数: <span class="text-sky-700 font-black">${stat.correct}</span>問</span>
+            ${hasStar
+              ? '<span class="bg-amber-400 text-slate-900 px-2 py-0.5 rounded-full">⭐ クリア済</span>'
+              : '<span class="bg-white/80 text-slate-500 px-2 py-0.5 rounded-full">挑戦する ➔</span>'}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    /* =========================================================================
+       8. クイズ進行ロジック
+    ========================================================================= */
+    let quizSession = {
+      unitId: null,
+      unitName: '',
+      isMix: false,
+      questions: [],
+      currentIndex: 0,
+      correctCount: 0,
+      streak: 0,
+      earnedCoins: 0,
+      answered: false
+    };
+
+    function startQuiz(unitId) {
+      SoundFX.click();
+      const isMix = unitId === 'mix';
+      const totalQ = isMix ? 7 : 5;
+      const questions = [];
+
+      if (isMix) {
+        // 全11単元からランダムに7問出題
+        const pickedUnits = shuffle(UNITS).slice(0, totalQ);
+        pickedUnits.forEach(u => {
+          const q = generateQuestionForUnit(u.id);
+          q.unitLabel = u.name;
+          questions.push(q);
+        });
+      } else {
+        const unitObj = UNITS.find(u => u.id === unitId);
+        for (let i = 0; i < totalQ; i++) {
+          const q = generateQuestionForUnit(unitId);
+          q.unitLabel = unitObj.name;
+          questions.push(q);
+        }
+      }
+
+      quizSession = {
+        unitId,
+        unitName: isMix ? '👑 全単元ミックス（総合テスト）' : UNITS.find(u => u.id === unitId).name,
+        isMix,
+        questions,
+        currentIndex: 0,
+        correctCount: 0,
+        streak: 0,
+        earnedCoins: 0,
+        answered: false
+      };
+
+      document.getElementById('quiz-unit-title').textContent = quizSession.unitName;
+      document.getElementById('quiz-total-num').textContent = totalQ;
+
+      switchView('quiz');
+      renderCurrentQuestion();
+    }
+
+    function renderCurrentQuestion() {
+      const q = quizSession.questions[quizSession.currentIndex];
+      quizSession.answered = false;
+
+      // ヘッダー＆プログレスバー更新
+      document.getElementById('quiz-current-num').textContent = quizSession.currentIndex + 1;
+      const pct = ((quizSession.currentIndex) / quizSession.questions.length) * 100;
+      document.getElementById('quiz-progress-bar').style.width = `${Math.max(10, pct)}%`;
+
+      // 連続正解バッジ
+      const streakBadge = document.getElementById('quiz-streak-badge');
+      if (quizSession.streak >= 2) {
+        streakBadge.classList.remove('hidden');
+        document.getElementById('quiz-streak-count').textContent = quizSession.streak;
+      } else {
+        streakBadge.classList.add('hidden');
+      }
+
+      // 難易度＆コイン表示
+      const baseReward = quizSession.isMix ? Math.round(q.coins * 1.5) : q.coins;
+      document.getElementById('quiz-diff-badge').textContent = quizSession.isMix ? `${q.unitLabel}・${q.diff}` : `${q.diff}レベル`;
+      document.getElementById('quiz-reward-preview').textContent = baseReward;
+
+      // 問題文
+      document.getElementById('quiz-question-text').innerHTML = q.q;
+
+      // SVG図形表示
+      const visualBox = document.getElementById('quiz-visual-box');
+      if (q.svg) {
+        visualBox.innerHTML = q.svg;
+        visualBox.classList.remove('hidden');
+      } else {
+        visualBox.classList.add('hidden');
+        visualBox.innerHTML = '';
+      }
+
+      // 選択肢生成（シャッフル）
+      const choicesGrid = document.getElementById('quiz-choices-grid');
+      choicesGrid.innerHTML = '';
+      const shuffledChoices = shuffle(q.choices);
+
+      shuffledChoices.forEach((choiceHTML, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-pop choice-btn bg-sky-50 hover:bg-sky-100 border-3 border-sky-300 rounded-2xl p-4 font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-3 text-left shadow-xs';
+        const labels = ['ア', 'イ', 'ウ', 'エ'];
+        btn.innerHTML = `
+          <span class="w-8 h-8 rounded-xl bg-sky-500 text-white font-black text-sm flex items-center justify-center shrink-0">${labels[idx]}</span>
+          <div class="flex-1">${choiceHTML}</div>
+        `;
+        btn.onclick = () => handleAnswer(choiceHTML, btn);
+        choicesGrid.appendChild(btn);
+      });
+
+      // 解説エリア隠す
+      document.getElementById('quiz-feedback-area').classList.add('hidden');
+    }
+
+    function handleAnswer(selectedChoice, clickedBtn) {
+      if (quizSession.answered) return;
+      quizSession.answered = true;
+
+      const q = quizSession.questions[quizSession.currentIndex];
+      const isCorrect = selectedChoice === q.answer;
+
+      // 全選択肢ボタンを無効化し、正解・不正解の色付け
+      const allBtns = document.querySelectorAll('.choice-btn');
+      allBtns.forEach(btn => {
+        btn.disabled = true;
+        btn.classList.remove('hover:bg-sky-100');
+      });
+
+      const feedbackArea = document.getElementById('quiz-feedback-area');
+      const fbIcon = document.getElementById('feedback-icon');
+      const fbTitle = document.getElementById('feedback-title');
+      const fbCoinMsg = document.getElementById('feedback-coin-msg');
+
+      if (isCorrect) {
+        clickedBtn.className = 'choice-btn bg-emerald-100 border-3 border-emerald-500 rounded-2xl p-4 font-extrabold text-emerald-950 text-base sm:text-lg flex items-center gap-3 text-left shadow-sm';
+        SoundFX.correct();
+
+        quizSession.correctCount++;
+        quizSession.streak++;
+
+        // コイン計算（基本コイン × ミックス倍率 + 連続正解ボーナス）
+        let reward = quizSession.isMix ? Math.round(q.coins * 1.5) : q.coins;
+        let bonus = quizSession.streak >= 2 ? (quizSession.streak - 1) * 5 : 0;
+        const totalGain = reward + bonus;
+
+        quizSession.earnedCoins += totalGain;
+        userState.totalCorrect++;
+
+        // 単元別正解数加算
+        if (!quizSession.isMix) {
+          if (!userState.unitStats[quizSession.unitId]) {
+            userState.unitStats[quizSession.unitId] = { correct: 0, cleared: 0 };
+          }
+          userState.unitStats[quizSession.unitId].correct++;
+        }
+
+        addCoins(totalGain);
+
+        feedbackArea.className = 'rounded-2xl p-4 sm:p-5 border-2 border-emerald-400 bg-emerald-50 space-y-3';
+        fbIcon.textContent = '🎉';
+        fbTitle.textContent = '大正解！すばらしい！';
+        fbTitle.className = 'text-lg sm:text-xl font-black text-emerald-700';
+        fbCoinMsg.textContent = bonus > 0
+          ? `+${totalGain}コイン獲得！（連続正解ボーナス +${bonus}🪙）`
+          : `+${totalGain}コイン獲得！`;
+      } else {
+        clickedBtn.className = 'choice-btn bg-rose-100 border-3 border-rose-400 rounded-2xl p-4 font-extrabold text-rose-950 text-base sm:text-lg flex items-center gap-3 text-left opacity-80';
+        SoundFX.wrong();
+        quizSession.streak = 0;
+
+        feedbackArea.className = 'rounded-2xl p-4 sm:p-5 border-2 border-rose-300 bg-rose-50 space-y-3';
+        fbIcon.textContent = '💡';
+        fbTitle.textContent = 'おしい！解説を確認しよう';
+        fbTitle.className = 'text-lg sm:text-xl font-black text-rose-700';
+        fbCoinMsg.innerHTML = `正解は： <span class="bg-white px-2 py-0.5 rounded border border-rose-300 text-slate-900">${q.answer}</span>`;
+      }
+
+      document.getElementById('feedback-explanation').innerHTML = q.exp;
+      const nextBtn = document.getElementById('quiz-next-btn');
+      nextBtn.textContent = (quizSession.currentIndex + 1 >= quizSession.questions.length)
+        ? '結果を見る 🏆'
+        : '次の問題へ ➔';
+
+      feedbackArea.classList.remove('hidden');
+      feedbackArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function nextQuestion() {
+      SoundFX.click();
+      quizSession.currentIndex++;
+      if (quizSession.currentIndex < quizSession.questions.length) {
+        renderCurrentQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function finishQuiz() {
+      // クリア記録保存
+      if (!quizSession.isMix && quizSession.correctCount >= 3) {
+        if (!userState.unitStats[quizSession.unitId]) {
+          userState.unitStats[quizSession.unitId] = { correct: 0, cleared: 0 };
+        }
+        userState.unitStats[quizSession.unitId].cleared++;
+      }
+      saveState();
+
+      document.getElementById('result-unit-name').textContent = quizSession.unitName;
+      document.getElementById('result-correct-count').textContent = quizSession.correctCount;
+      document.getElementById('result-total-count').textContent = quizSession.questions.length;
+      document.getElementById('result-earned-coins').textContent = quizSession.earnedCoins;
+
+      const invite = document.getElementById('result-gacha-invite');
+      if (userState.coins >= 100) {
+        invite.classList.remove('hidden');
+      } else {
+        invite.classList.add('hidden');
+      }
+
+      SoundFX.gachaOpen('SR');
+      switchView('result');
+    }
+
+    function confirmQuitQuiz() {
+      const modal = document.getElementById('custom-modal');
+      document.getElementById('modal-title').textContent = '学習をやめますか？';
+      document.getElementById('modal-message').textContent = 'これまでに獲得したコインはそのまま保存されます。';
+      document.getElementById('modal-confirm-btn').onclick = () => {
+        closeModal();
+        switchView('home');
+      };
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('custom-modal').classList.add('hidden');
+    }
+
+    /* =========================================================================
+       9. ガチャ抽選＆アニメーションロジック
+    ========================================================================= */
+    let isPullingGacha = false;
+
+    function resetGachaStage() {
+      document.getElementById('gacha-idle-display').classList.remove('hidden');
+      document.getElementById('gacha-capsule-display').classList.add('hidden');
+      document.getElementById('gacha-result-display').classList.add('hidden');
+    }
+
+    function pullGacha(times) {
+      if (isPullingGacha) return;
+      const cost = 100 * times;
+      if (userState.coins < cost) return;
+
+      isPullingGacha = true;
+      userState.coins -= cost;
+      saveState();
+      updateCoinUI();
+
+      // ボタン無効化
+      document.getElementById('btn-pull-1').disabled = true;
+
+      // レアリティ抽選（N:45%, R:30%, SR:18%, UR:7%）
+      const rand = Math.random() * 100;
+      let targetRarity = 'N';
+      if (rand < 7) targetRarity = 'UR';
+      else if (rand < 25) targetRarity = 'SR';
+      else if (rand < 55) targetRarity = 'R';
+
+      // 初期装備以外の該当レアリティからランダム選出
+      const pool = AVATAR_ITEMS.filter(i => i.rarity === targetRarity && i.id !== 'acc_none');
+      const wonItem = pool[Math.floor(Math.random() * pool.length)];
+      const isNew = !userState.unlockedItems.includes(wonItem.id);
+
+      if (isNew) {
+        userState.unlockedItems.push(wonItem.id);
+      } else {
+        // 被り救済：30コイン還元
+        userState.coins += 30;
+      }
+      saveState();
+
+      // カプセル色決定
+      const capColors = {
+        N: ['#94a3b8', '#e2e8f0'],
+        R: ['#0284c7', '#bae6fd'],
+        SR: ['#d97706', '#fef08a'],
+        UR: ['#e11d48', '#fbcfe8']
+      };
+      const [c1, c2] = capColors[targetRarity];
+
+      document.getElementById('gacha-idle-display').classList.add('hidden');
+      document.getElementById('gacha-result-display').classList.add('hidden');
+
+      const capDisp = document.getElementById('gacha-capsule-display');
+      const capSvg = document.getElementById('gacha-capsule-svg');
+      capSvg.innerHTML = `
+        <svg viewBox="0 0 100 100" class="w-full h-full anim-drop">
+          <path d="M10,50 A40,40 0 0,1 90,50 Z" fill="${c1}" stroke="#ffffff" stroke-width="3"/>
+          <path d="M10,50 A40,40 0 0,0 90,50 Z" fill="${c2}" stroke="#ffffff" stroke-width="3"/>
+          <rect x="8" y="46" width="84" height="8" rx="4" fill="#ffffff"/>
+          <circle cx="50" cy="50" r="10" fill="#fbbf24" stroke="#ffffff" stroke-width="3"/>
+        </svg>
+      `;
+      capDisp.classList.remove('hidden');
+      SoundFX.gachaSpin();
+
+      // 0.8秒後に揺れる演出
+      setTimeout(() => {
+        capSvg.firstElementChild.classList.remove('anim-drop');
+        capSvg.firstElementChild.classList.add('anim-shake');
+      }, 750);
+
+      // 1.6秒後に結果発表
+      setTimeout(() => {
+        capDisp.classList.add('hidden');
+        SoundFX.gachaOpen(targetRarity);
+        updateCoinUI();
+
+        const resDisp = document.getElementById('gacha-result-display');
+        const resRarity = document.getElementById('gacha-res-rarity');
+        const resIcon = document.getElementById('gacha-res-icon');
+        const resName = document.getElementById('gacha-res-name');
+        const resNew = document.getElementById('gacha-res-new-badge');
+
+        const rarityLabels = {
+          N: '★ ノーマル (N)',
+          R: '★★ レア (R)',
+          SR: '★★★ スーパーレア (SR)',
+          UR: '👑 ウルトラレア (UR)'
+        };
+        resRarity.textContent = rarityLabels[targetRarity];
+        resRarity.className = `text-xs font-black px-3 py-0.5 rounded-full mb-1.5 rarity-${targetRarity} text-slate-900`;
+
+        resIcon.className = `w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-4 flex items-center justify-center shadow-lg mb-2 rarity-${targetRarity} overflow-hidden`;
+        if (wonItem.type === 'bg') {
+          resIcon.innerHTML = `<div class="w-full h-full" style="${wonItem.css}"></div>`;
+        } else if (wonItem.type === 'title') {
+          resIcon.innerHTML = `<span class="text-xs font-black text-slate-800 px-2 text-center">${wonItem.name}</span>`;
+        } else {
+          resIcon.innerHTML = `<span class="text-5xl">${wonItem.emoji}</span>`;
+        }
+
+        const typeNames = { char: 'キャラクター', acc: 'アクセサリー', bg: '背景', title: '称号' };
+        resName.textContent = `【${typeNames[wonItem.type]}】${wonItem.name}`;
+
+        if (isNew) {
+          resNew.textContent = '✨ NEWアイテム獲得！きせかえで装備できるよ！';
+          resNew.className = 'text-xs font-extrabold text-emerald-300 mt-1';
+        } else {
+          resNew.textContent = '重複ボーナス！ +30コイン還元🪙';
+          resNew.className = 'text-xs font-extrabold text-amber-300 mt-1';
+        }
+
+        resDisp.classList.remove('hidden');
+        isPullingGacha = false;
+        updateCoinUI();
+      }, 1600);
+    }
+
+    /* =========================================================================
+       10. アバター着せ替え＆図鑑ロジック
+    ========================================================================= */
+    let currentAvatarTab = 'char';
+
+    function filterAvatarTab(tabType) {
+      SoundFX.click();
+      currentAvatarTab = tabType;
+
+      document.querySelectorAll('.av-tab').forEach(btn => {
+        btn.className = 'av-tab btn-pop px-4 py-2 rounded-xl font-extrabold text-xs sm:text-sm bg-slate-100 text-slate-600';
+      });
+      document.getElementById(`tab-av-${tabType}`).className = 'av-tab btn-pop px-4 py-2 rounded-xl font-extrabold text-xs sm:text-sm bg-sky-500 text-white shadow-xs';
+
+      renderAvatarCustomizer();
+    }
+
+    function renderAvatarCustomizer() {
+      updateAllAvatarDisplays();
+
+      // 図鑑コンプ率更新
+      const unlockedCount = userState.unlockedItems.length;
+      const totalCount = AVATAR_ITEMS.length;
+      const rate = Math.round((unlockedCount / totalCount) * 100);
+      document.getElementById('dex-progress-text').textContent = `${unlockedCount} / ${totalCount} (${rate}%)`;
+
+      const grid = document.getElementById('avatar-items-grid');
+      grid.innerHTML = '';
+
+      const items = AVATAR_ITEMS.filter(i => i.type === currentAvatarTab);
+
+      items.forEach(item => {
+        const isUnlocked = userState.unlockedItems.includes(item.id);
+        const isEquipped = userState.equipped[item.type] === item.id;
+
+        const card = document.createElement('div');
+        if (!isUnlocked) {
+          // 未所持（図鑑シルエット）
+          card.className = 'rounded-2xl p-3.5 border-2 border-dashed border-slate-300 bg-slate-100/70 flex flex-col items-center justify-center text-center opacity-70 min-h-[145px]';
+          card.innerHTML = `
+            <span class="text-[10px] font-black px-2 py-0.5 rounded bg-slate-200 text-slate-500 mb-1">${item.rarity}</span>
+            <div class="text-3xl text-slate-400 my-1">❓</div>
+            <div class="text-xs font-extrabold text-slate-500">？？？</div>
+            <div class="text-[10px] text-slate-400 mt-1">ガチャでゲット！</div>
+          `;
+        } else {
+          card.className = `btn-pop cursor-pointer rounded-2xl p-3.5 border-3 flex flex-col items-center justify-between text-center transition relative min-h-[145px] rarity-${item.rarity} ${isEquipped ? 'ring-4 ring-sky-500' : ''}`;
+          card.onclick = () => equipItem(item);
+
+          let previewHTML = '';
+          if (item.type === 'bg') {
+            previewHTML = `<div class="w-12 h-12 rounded-xl border-2 border-white shadow-xs my-1" style="${item.css}"></div>`;
+          } else if (item.type === 'title') {
+            previewHTML = `<div class="my-2 px-2 py-1 rounded-lg bg-white/90 text-xs font-black text-slate-800 border border-slate-200">${item.name}</div>`;
+          } else {
+            previewHTML = `<div class="text-4xl my-1">${item.emoji || '🚫'}</div>`;
+          }
+
+          card.innerHTML = `
+            <div class="w-full flex items-center justify-between">
+              <span class="text-[10px] font-black px-2 py-0.5 rounded bg-white/80 text-slate-700">${item.rarity}</span>
+              ${isEquipped ? '<span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-500 text-white">そうび中</span>' : ''}
+            </div>
+            ${previewHTML}
+            <div>
+              <div class="text-xs sm:text-sm font-black text-slate-800">${item.name}</div>
+              <div class="text-[10px] font-bold text-slate-600 line-clamp-1 mt-0.5">${item.desc}</div>
+            </div>
+          `;
+        }
+        grid.appendChild(card);
+      });
+    }
+
+    function equipItem(item) {
+      SoundFX.click();
+      userState.equipped[item.type] = item.id;
+      saveState();
+      renderAvatarCustomizer();
+    }
+
+    /* =========================================================================
+       11. 初期化処理
+    ========================================================================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      updateAllAvatarDisplays();
+      updateCoinUI();
+      renderHomeUnits();
+    });
+  </script>
+</body>
+</html>
